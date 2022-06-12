@@ -1,20 +1,24 @@
-# Script per l'header del sistema
+'''
+# This script simulates the PC header that takes care of calling the parsers
+# to extract the metadata. Moreover, having to use funcX is an excellent
+# example of how this framework works.
+'''
 from funcx import FuncXClient
 import time
 from functions import *
 
 if __name__ == '__main__':
-    # Istanziare la classe
+    # Instantiate the class
     fxc = FuncXClient()
 
     # Endpoint: Linux home
-    LinuxEndpoint = 'firstEndPoint'
+    LinuxEndpoint = '$ENDPOINT_CODE1'
 
     # Endpoint: PurpleJeans
-    PurpleEndpoint = 'secondEndPoint'
+    PurpleEndpoint = '$ENDPOINT_CODE2'
 
     # Endpoint: Purplejeans 2
-    PurpleEndpoint2 = 'thirdEndPoint'
+    PurpleEndpoint2 = '$ENDPOINT_CODE3'
 
     # Function UUID
     UUIDParserTemperature = fxc.register_function(parserTemperature)
@@ -28,19 +32,19 @@ if __name__ == '__main__':
 
     time.sleep(3)
     
-    # Recupera lo stato di esecuzione del task
+    # get the task execution status
     while fxc.get_task(resTemperature)['pending'] == True:
         time.sleep(3)
     
-    # Recupera lo stato di esecuzione del task
+    # get the task execution status
     while fxc.get_task(resLW)['pending'] == True:
         time.sleep(3)    
     
-    # Recupera lo stato di esecuzione del task
+    # get the task execution status
     while fxc.get_task(resPrecip)['pending'] == True:
         time.sleep(3)
     
-    # Recupera i risultati del task singolo
+    # Get the results of the single task
     print(fxc.get_result(resTemperature))
     print(fxc.get_result(resLW))
     print(fxc.get_result(resPrecip))

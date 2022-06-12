@@ -1,10 +1,16 @@
+'''
+# The file includes all the useful methods for running both PC header: query
+# and parser. It contains parsers and queries for each file type.
+'''
 # COMPLETO
 def parserPrecip():
     import netCDF4 as nc
     import requests
     import os.path
     import datetime
+    import psycopg2
 
+    # Download the file for each year
     for anno in range(1979, 2023):
         # Download and get the file
         URL = 'https://downloads.psl.noaa.gov/Datasets/cpc_global_precip/precip.' + str(anno) + '.nc'
@@ -19,7 +25,7 @@ def parserPrecip():
 
         tupla = {}
 
-        # Estrai latitudine
+        # Extract latitude
         latitudine = ds['lat'].__dict__
         lat_max = latitudine['actual_range'][0]
         lat_min = latitudine['actual_range'][1]
@@ -27,7 +33,7 @@ def parserPrecip():
         tupla['lat_min'] = lat_min
         tupla['lat_max'] = lat_max
 
-        # Estrai longitudine
+        # Extract longitude
         longitude = ds['lon'].__dict__
         long_min = longitude['actual_range'][0]
         long_max = longitude['actual_range'][1]
@@ -49,12 +55,15 @@ def parserPrecip():
         t_cal = u"gregorian" # or standard
 
         datevar = []
+        # Convert numbers to dates
         datevar.append(nc.num2date(time_min, units = t_unit,calendar = t_cal))
         datevar.append(nc.num2date(time_max, units = t_unit,calendar = t_cal))
 
+        # Convert dates to datetime objects
         time_modified_min = datetime.datetime.strptime(str(datevar[0]), "%Y-%m-%d %H:%M:%S")
         time_modified_max = datetime.datetime.strptime(str(datevar[1]), "%Y-%m-%d %H:%M:%S")
 
+        # Compose the dates
         date_min = str(time_modified_min.year) + "-" + str(time_modified_min.month) + "-" + str(time_modified_min.day)
         date_max = str(time_modified_max.year) + "-" + str(time_modified_max.month) + "-" + str(time_modified_max.day)
 
@@ -64,14 +73,13 @@ def parserPrecip():
         field = ds['precip'].__dict__
         description = field['var_desc']
 
-        import psycopg2
-
+        # Run query
         sql = """INSERT INTO files(lat_min, lat_max, long_min, long_max, grid_Y, grid_X, time_min, time_max, link, misura) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
 
         conn = None
         try:
             # connect to the PostgreSQL database
-            conn = psycopg2.connect("connector to database")
+            conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
             # create a new cursor
             cur = conn.cursor()
@@ -99,6 +107,7 @@ def parserLW():
     import netCDF4 as nc
     import requests
     import os.path
+    import psycopg2
 
     # Download and get the file
     URL = 'https://downloads.psl.noaa.gov/Datasets/olrcdr/olr.day.mean.nc'
@@ -114,7 +123,7 @@ def parserLW():
 
     tupla = {}
 
-    # Estrai latitudine
+    # Extract latitude
     latitudine = ds['lat'].__dict__
     lat_max = latitudine['actual_range'][0]
     lat_min = latitudine['actual_range'][1]
@@ -122,7 +131,7 @@ def parserLW():
     tupla['lat_min'] = lat_min
     tupla['lat_max'] = lat_max
 
-    # Estrai longitudine
+    # Extract longitude
     latitudine = ds['lon'].__dict__
     long_min = latitudine['actual_range'][0]
     long_max = latitudine['actual_range'][1]
@@ -144,12 +153,15 @@ def parserLW():
     t_cal = u"gregorian" # or standard
 
     datevar = []
+    # Convert numbers to dates
     datevar.append(nc.num2date(time_min, units = t_unit,calendar = t_cal))
     datevar.append(nc.num2date(time_max, units = t_unit,calendar = t_cal))
 
+    # Convert dates to datetime objects
     time_modified_min = datetime.datetime.strptime(str(datevar[0]), "%Y-%m-%d %H:%M:%S")
     time_modified_max = datetime.datetime.strptime(str(datevar[1]), "%Y-%m-%d %H:%M:%S")
 
+    # Compose the dates
     date_min = str(time_modified_min.year) + "-" + str(time_modified_min.month) + "-" + str(time_modified_min.day)
     date_max = str(time_modified_max.year) + "-" + str(time_modified_max.month) + "-" + str(time_modified_max.day)
 
@@ -159,14 +171,13 @@ def parserLW():
     field = ds['olr'].__dict__
     description = field['var_desc']
 
-    import psycopg2
-
+    # Run query
     sql = """INSERT INTO files(lat_min, lat_max, long_min, long_max, grid_Y, grid_X, time_min, time_max, link, misura) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
 
     conn = None
     try:
         # connect to the PostgreSQL database
-        conn = psycopg2.connect("connector to database")
+        conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
         # create a new cursor
         cur = conn.cursor()
@@ -193,6 +204,7 @@ def parserTemperature():
     import requests
     import os.path
     import datetime
+    import psycopg2
     
     for anno in range(1880, 2030, 10):
         # Download and get the file
@@ -209,14 +221,7 @@ def parserTemperature():
 
         tupla = {}
 
-        # COMPLETO (Estrazione tramite dati e non metadati)
-        '''
-        Il Berkley non ha i range definiti
-        nei metadati quindi bisogna estrarre dai dati
-        '''
-        import datetime
-
-        # Estrai latitudine
+        # Extract latitude
         latitudine = ds['latitude'][:].compressed()
         lat_min = latitudine[0]
         lat_max = latitudine[-1]
@@ -224,7 +229,7 @@ def parserTemperature():
         tupla['lat_min'] = lat_min
         tupla['lat_max'] = lat_max
 
-        # Estrai longitudine
+        # Extract longitude
         longitude = ds['longitude'][:].compressed()
         long_min = longitude[0]
         long_max = longitude[-1]
@@ -238,11 +243,12 @@ def parserTemperature():
         gridY = abs(lats[1] - lats[0])
         gridX = abs(longs[1] - longs[0])
 
-        # Crea tempo
+        # Make Time
         time = ds['year'][:].compressed()
         time_min = datetime.datetime(int(time[0]), 1, 1)
         time_max = datetime.datetime(int(time[-1]), 12, 31)
 
+        # Compose the dates
         date_min = time_min.strftime("%Y-%m-%d")
         date_max = time_max.strftime("%Y-%m-%d")
 
@@ -252,14 +258,13 @@ def parserTemperature():
         field = ds['temperature'].__dict__
         description = field['long_name']
 
-        import psycopg2
-
+        # Run query
         sql = """INSERT INTO files(lat_min, lat_max, long_min, long_max, grid_Y, grid_X, time_min, time_max, link, misura) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
 
         conn = None
         try:
             # connect to the PostgreSQL database
-            conn = psycopg2.connect("connector to database")
+            conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
             # create a new cursor
             cur = conn.cursor()
@@ -306,19 +311,25 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
 
     queryResults = None
     conn = None
-    
+
+    # Convert dates to datetime objects
     loc_date_min = datetime.datetime.strptime(date_min, "%Y-%m-%d")
     loc_date_max = datetime.datetime.strptime(date_max, "%Y-%m-%d")
 
+    # Replace the last digit of the minimum year with 0 and the last digit of
+    # the maximum year with 9
     app_dmin = re.sub(r".$", "0", str(loc_date_min.year))
     app_dmax = re.sub(r".$", "9", str(loc_date_max.year))
 
+    # Replace the month and day of the minimum date with 01-01 and the month
+    # and day of the maximum date with 12-31
     query_data_min = app_dmin + '-01-01'
     query_data_max = app_dmax + '-12-31'
 
+    # Run query
     try:
         # connect to the PostgreSQL database
-        conn = psycopg2.connect("connector to database")
+        conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
         # create a new cursor
         cur = conn.cursor()
@@ -337,9 +348,9 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
         if conn is not None:
             conn.close()
 
-    spero_query = np.asarray(queryResults)
-
-    list_spero_query = spero_query.tolist()
+    # Convert elements into a list
+    _query = np.asarray(queryResults)
+    list_query = _query.tolist()
 
     if os.path.exists('TupleTemperatures.txt'):
         os.remove('TupleTemperatures.txt')
@@ -347,17 +358,20 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
     # PARSER SIDE
     Links = []
 
-    for i in list_spero_query:
+    for i in list_query:
         Links.append(i[0])
 
+    # Convert dates to datetime objects
     datetime_beg = datetime.datetime.strptime(date_min, '%Y-%m-%d')
     datetime_end = datetime.datetime.strptime(date_max, '%Y-%m-%d')
 
+    # Compute offset limits 
     days_off_beg = datetime_beg.timetuple().tm_yday
     days_off_end = datetime_end.timetuple().tm_yday
     year_off_beg = int(repr(datetime_beg.year)[-1])
     year_off_end = int(repr(datetime_end.year)[-1])
 
+    # Compute day limits
     index_beg = 365 * year_off_beg + days_off_beg
     index_end = 365 * year_off_end + days_off_end
 
@@ -371,7 +385,7 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
     numElems = 0
 
     while contatore < num_NETCDF:
-        # Apri file NETCDF4
+        # Open NetCDF file
         nomeFile = Links[contatore].rsplit("/", -1)[-1]
 
         if not os.path.exists(nomeFile):
@@ -379,41 +393,44 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
             open(nomeFile, "wb").write(response.content)
         ds = nc.Dataset(nomeFile)
 
+        # Get days, months and years
         day = ds['day'][:]
         month = ds['month'][:]
         year = ds['year'][:]
 
+        # Get all elements
         temperature = ds['temperature'][:]
         latitudini = ds['latitude'][:].compressed()
         longitudini = ds['longitude'][:].compressed()
 
+        # Compute range 
         rangeLat = np.where((latitudini >= float(lat_min)) & (latitudini <= float(lat_max)))
         rangeLong = np.where((longitudini >= float(long_min)) & (longitudini <= float(long_max)))
 
-        spero1 = np.asarray(rangeLat)
-        spero2 = np.asarray(rangeLong)
-
-        listrangeLat = spero1.tolist()[0]
-        listrangeLong = spero2.tolist()[0]
+        # Convert range into a list
+        lat_ndarray = np.asarray(rangeLat)
+        long_ndarray = np.asarray(rangeLong)
+        listrangeLat = lat_ndarray.tolist()[0]
+        listrangeLong = long_ndarray.tolist()[0]
 
         # 1 file
         if num_NETCDF == 1:
             locale_sinistro = index_beg
             locale_destro = index_end
-        # Inizio
+        # Beginning file
         elif contatore == 0:
             locale_sinistro = index_beg
             locale_destro = 3652
-        # Centrale
+        # Middle file
         elif contatore > 0 and contatore < num_NETCDF-1:
             locale_sinistro = 0
             locale_destro = 3652
         else:
-        # Fine
+        # End file
             locale_sinistro = 0
             locale_destro = index_end
 
-        # Scrivi direttamente su file
+        # Write to file
         with open(r'TupleTemperatures.txt', 'a') as fp:
             for z in range(locale_sinistro, locale_destro):
                 for i in listrangeLat:
@@ -432,7 +449,6 @@ def queryTemperature(lat_min, lat_max, long_min, long_max, date_min, date_max, m
 
 def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
     
-    # Codice della query per estrarre i link
     import datetime
     import psycopg2
     import netCDF4 as nc
@@ -453,16 +469,19 @@ def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max,
     queryResults = None
     conn = None
 
+    # Convert dates to datetime objects
     loc_date_min = datetime.datetime.strptime(data_min, "%Y-%m-%d")
     loc_date_max = datetime.datetime.strptime(data_max, "%Y-%m-%d")
-
+    
+    # Replace the month and day of the minimum date with 01-01 and the month
+    # and day of the maximum date with 12-31
     query_data_min = str(loc_date_min.year) + '-01-01'
     query_data_max = str(loc_date_max.year) + '-12-31'
 
-    # Esegui Query
+    # Run Query
     try:
         # connect to the PostgreSQL database
-        conn = psycopg2.connect("connector to database")
+        conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
         # create a new cursor
         cur = conn.cursor()
@@ -481,23 +500,25 @@ def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max,
         if conn is not None:
             conn.close()
 
-    spero_query = np.asarray(queryResults)
-    list_spero_query = spero_query.tolist()
+    # Convert elements into a list
+    _query = np.asarray(queryResults)
+    list_query = _query.tolist()
 
     if os.path.exists('TuplePrecipitation.txt'):
         os.remove('TuplePrecipitation.txt')
 
     Links = []
 
-    for i in list_spero_query:
+    for i in list_query:
         Links.append(i[0])
 
-    ''' Filtraggio dati '''
+    # FILTERING DATA
 
-    # Calcola offset inizio e fine
+    # Convert dates to datetime objects
     datetime_beg = datetime.datetime.strptime(data_min, '%Y-%m-%d')
     datetime_end = datetime.datetime.strptime(data_max, '%Y-%m-%d')
 
+    # Compute day limits
     index_beg = datetime_beg.timetuple().tm_yday
     index_end = datetime_end.timetuple().tm_yday
 
@@ -511,7 +532,7 @@ def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max,
     numElems = 0
 
     while contatore < num_NETCDF:
-        # Apri file NETCDF4
+        # Open NetCDF file
         nomeFile = Links[contatore].rsplit("/", -1)[-1]
 
         if not os.path.exists(nomeFile):
@@ -519,40 +540,44 @@ def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max,
             open(nomeFile, "wb").write(response.content)
         ds = nc.Dataset(nomeFile)
 
+        # Get time, unit step and calendar
         time = ds['time'].__dict__
         current_time = ds['time'][:]
         t_unit = time['units']
         t_cal = u"gregorian" # or standard
 
+        # Get all elements
         precipitazioni = ds['precip'][:]
         latitudini = ds['lat'][:].compressed()
         longitudini = ds['lon'][:].compressed()
 
+        # Compute range
         rangeLat = np.where((latitudini >= lat_min) & (latitudini <= lat_max))
         rangeLong = np.where((longitudini >= long_min) & (longitudini <= long_max))
 
-        spero1 = np.asarray(rangeLat)
-        spero2 = np.asarray(rangeLong)
-
-        listrangeLat = spero1.tolist()[0]
-        listrangeLong = spero2.tolist()[0]
+        # Convert range into a list
+        lat_ndarray = np.asarray(rangeLat)
+        long_ndarray = np.asarray(rangeLong)
+        listrangeLat = lat_ndarray.tolist()[0]
+        listrangeLong = long_ndarray.tolist()[0]
 
         if num_NETCDF == 1:
             locale_sinistro = index_beg
             locale_destro = index_end
-        # Inizio
+        # Beginning file
         elif contatore == 0:
             locale_sinistro = index_beg
             locale_destro = 364
-        # Centrale
+        # Middle file
         elif contatore > 0 and contatore < num_NETCDF-1:
             locale_sinistro = 0
             locale_destro = 364
         else:
-        # Fine
+        # End file
             locale_sinistro = 0
             locale_destro = index_end
 
+        # Write to file
         with open(r'TuplePrecipitation.txt', 'a') as fp:
             for z in range(locale_sinistro, locale_destro):
                 for i in listrangeLat:
@@ -570,6 +595,7 @@ def queryPrecipitation(lat_min, lat_max, long_min, long_max, data_min, data_max,
     return infoData
 
 def queryLW(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
+    
     import datetime
     import psycopg2
     import netCDF4 as nc
@@ -579,7 +605,6 @@ def queryLW(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
     import os
     import requests
 
-    # Basta cercare la misura "Outgoing Longwave Radiation"
     sql_query = """ SELECT  link \
                     FROM 	files \
                     WHERE   misura = %s;
@@ -588,10 +613,10 @@ def queryLW(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
     queryResults = None
     conn = None
 
-    # Esegui Query
+    # Run Query
     try:
         # connect to the PostgreSQL database
-        conn = psycopg2.connect("connector to database")
+        conn = psycopg2.connect(dbname='$DBNAME', user='$USERNAME', host='$HOSTNAME', password='$PASSWORD', port='$ID_PORT')
 
         # create a new cursor
         cur = conn.cursor()
@@ -610,21 +635,22 @@ def queryLW(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
         if conn is not None:
             conn.close()
 
-    spero_query = np.asarray(queryResults)
-    list_spero_query = spero_query.tolist()
+    # Convert elements into a list
+    _query = np.asarray(queryResults)
+    list_query = _query.tolist()
 
     if os.path.exists('TupleLW.txt'):
         os.remove('TupleLW.txt')
 
-    Links = list_spero_query[0]
+    Links = list_query[0]
 
-    ''' Filtraggio dati '''
+    # Filtering data
 
     # Dictionary Variables
     infoData = {}
     numElems = 0
 
-    # Apri file NETCDF4
+    # Open NetCDF file
     nomeFile = Links[0].rsplit("/", -1)[-1]
 
     if not os.path.exists(nomeFile):
@@ -632,43 +658,48 @@ def queryLW(lat_min, lat_max, long_min, long_max, data_min, data_max, misura):
         open(nomeFile, "wb").write(response.content)
     ds = nc.Dataset(nomeFile)
 
+    # Get time, unit step and calendar
     time = ds['time'].__dict__
     current_time = ds['time'][:]
     t_unit = time['units']
     t_cal = u"gregorian" # or standard
 
+    # Convert dates to datetime objects
     datetime_min = datetime.datetime.strptime(data_min, "%Y-%m-%d")
     datetime_max = datetime.datetime.strptime(data_max, "%Y-%m-%d")
 
+    # Convert date into number
     date_min_number = nc.date2num(datetime_min, units = t_unit, calendar = t_cal)
     date_max_number = nc.date2num(datetime_max, units = t_unit, calendar = t_cal)
 
+    # Compute day limits
     index_begNP = np.where(current_time == date_min_number)
     index_endNP = np.where(current_time == date_max_number)
-
-    speroindex_beg = np.asarray(index_begNP)
-    speroindex_end = np.asarray(index_endNP)
-
-    index_beg = speroindex_beg.tolist()[0]
-    index_end = speroindex_end.tolist()[0]
+    _index_beg = np.asarray(index_begNP)
+    _index_end = np.asarray(index_endNP)
+    index_beg = _index_beg.tolist()[0]
+    index_end = _index_end.tolist()[0]
 
     time = ds['time'].__dict__
     current_time = ds['time'][:]
     t_unit = time['units']
     t_cal = u"gregorian" # or standard
 
+    # Get all elements
     latitudini = ds['lat'][:].compressed()
     longitudini = ds['lon'][:].compressed()
 
+    # Compute range
     rangeLat = np.where((latitudini >= lat_min) & (latitudini <= lat_max))
     rangeLong = np.where((longitudini >= long_min) & (longitudini <= long_max))
+    
+    # Convert range into a list
+    lat_ndarray = np.asarray(rangeLat)
+    long_ndarray = np.asarray(rangeLong)
+    listrangeLat = lat_ndarray.tolist()[0]
+    listrangeLong = long_ndarray.tolist()[0]
 
-    spero1 = np.asarray(rangeLat)
-    spero2 = np.asarray(rangeLong)
-
-    listrangeLat = spero1.tolist()[0]
-    listrangeLong = spero2.tolist()[0]
-
+    # Write to file
     with open(r'TupleLW.txt', 'w') as fp:
         for z in range(index_beg[0], index_end[0]):
             for i in listrangeLat:

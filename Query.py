@@ -1,4 +1,7 @@
-# Script per l'header del sistema
+'''
+# This script simulates the PC header that queries via the web interface.
+# Again, funcX is used.
+'''
 from funcx import FuncXClient
 import time
 from functions import *
@@ -16,11 +19,11 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    # Istanziare la classe
+    # Instantiate the class
     fxc = FuncXClient()
 
     # Endpoint: Purplejeans 2
-    PurpleEndpoint2 = 'endPointForExecuteQuery'
+    PurpleEndpoint2 = '$ENDPOINT_CODE2'
 
     # Function UUID
     if args.misura == "Air Surface Temperature Anomaly":
@@ -34,8 +37,9 @@ if __name__ == '__main__':
     resQuery = fxc.run(args.lat_min, args.lat_max, args.long_min, args.long_max, args.data_min, args.data_max, args.misura, function_id=UUID_Query, endpoint_id=PurpleEndpoint2)
     time.sleep(3)
 
+    # get the task execution status
     while fxc.get_task(resQuery)['pending'] == True:
         time.sleep(3)
 
-    # Recupera i risultati del task singolo
+    # Get the results of the single task
     print(fxc.get_result(resQuery))

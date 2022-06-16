@@ -52,6 +52,6 @@ The second machine has the following tecnichal specification:
 * **RAM**: 12 GB
 
 ## Contact
-The pdf [CloudComputing - Relazione.pdf](https://github.com/pasqualedetrino/Cloud-Computing---Indexing-Large-Geospatial-Data-with-Distributed-FaaS-Method/files/8885640/CloudComputing.-.Relazione.pdf) explains in detail the system.
+The [presentation](https://studentiuniparthenope-my.sharepoint.com/:p:/g/personal/gennaro_iannuzzo001_studenti_uniparthenope_it/EWgSGYEaG91GsIoOhfen-okBvRQszinhvJFNuc8GJeIKMw?e=nhRfJp) explains in detail the system.
 
 For questions about code, please contact [pasqualedetrino](https://github.com/pasqualedetrino) or [GennaroIannuzzo](https://github.com/GennaroIannuzzo).
